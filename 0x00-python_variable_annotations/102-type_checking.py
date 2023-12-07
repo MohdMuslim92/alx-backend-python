@@ -16,10 +16,10 @@ def zoom_array(lst: Tuple, factor: int = 2) -> List:
     Returns:
         A list containing the zoomed elements from the input tuple.
     """
-    zoomed_in: Tuple[Any, ...] = tuple(
+    zoomed_in: List[Any] = [
         item for item in lst
         for i in range(factor)
-        )
+        ]
     return zoomed_in
 
 
