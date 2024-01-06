@@ -2,10 +2,10 @@
 """Unit tests for access_nested_map function in utils module"""
 
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 from parameterized import parameterized
 from typing import Any, Dict, Mapping, Sequence
-from utils import access_nested_map, get_json
+from utils import access_nested_map, get_json, memoize
 
 
 class TestAccessNestedMap(unittest.TestCase):
@@ -59,3 +59,39 @@ class TestGetJson(unittest.TestCase):
 
             # Assert that requests.get was called once with the test URL
             req_get.assert_called_once_with(test_url)
+
+
+class TestMemoize(unittest.TestCase):
+    """Test case for memoize decorator"""
+
+    def test_memoize(self):
+        """Test memoize functionality"""
+
+        class TestClass:
+            """Test class"""
+            def a_method(self):
+                """Test method"""
+                return 42
+
+            @memoize
+            def a_property(self):
+                """Memoized property"""
+                return self.a_method()
+
+        # Patching a_method in TestClass
+        with patch.object(
+                TestClass,
+                'a_method', return_value=42) as mock_method:
+            # Creating an instance of TestClass
+            test_instance = TestClass()
+
+            # Calling a_property twice
+            result_1 = test_instance.a_property
+            result_2 = test_instance.a_property
+
+            # Asserting that a_method was called only once
+            mock_method.assert_called_once()
+
+            # Asserting the results are correct
+            self.assertEqual(result_1, 42)
+            self.assertEqual(result_2, 42)
