@@ -54,3 +54,13 @@ class TestGithubOrgClient(unittest.TestCase):
                 GithubOrgClient("google")._public_repos_url,
                 "https://api.github.com/users/google/repos",
                 )
+
+    @parameterized.expand([
+        ({"license": {"key": "my_license"}}, "my_license", True),
+        ({"license": {"key": "other_license"}}, "my_license", False),
+    ])
+    def test_has_license(self, repo, license_key, expected_result):
+        """Test GithubOrgClient.has_license"""
+        github_client = GithubOrgClient("google")
+        result = github_client.has_license(repo, license_key)
+        self.assertEqual(result, expected_result)
