@@ -2,7 +2,8 @@
 """Unit tests for GithubOrgClient"""
 
 from client import GithubOrgClient
-from parameterized import parameterized
+from fixtures import TEST_PAYLOAD
+from parameterized import parameterized, parameterized_class
 from typing import Dict
 import unittest
 from unittest.mock import MagicMock, Mock, patch, PropertyMock
@@ -64,3 +65,50 @@ class TestGithubOrgClient(unittest.TestCase):
         github_client = GithubOrgClient("google")
         result = github_client.has_license(repo, license_key)
         self.assertEqual(result, expected_result)
+
+
+@parameterized_class([
+    {
+        'org_payload_custom': TEST_PAYLOAD[0][0],
+        'repos_payload_custom': TEST_PAYLOAD[0][1],
+        'expected_repos_custom': TEST_PAYLOAD[0][2],
+        'apache2_repos_custom': TEST_PAYLOAD[0][3],
+    },
+])
+class TestIntegrationGithubOrgClient(unittest.TestCase):
+    """Integration tests for the GithubOrgClient."""
+    @classmethod
+    def setUpClass(cls) -> None:
+        """Sets up class fixtures."""
+        route_payload = {
+            'https://api.github.com/orgs/google': cls.org_payload_custom,
+            'https://api.github.com/orgs/google/repos': cls.
+            repos_payload_custom,
+        }
+
+        def get_payload(url):
+            if url in route_payload:
+                return Mock(**{'json.return_value': route_payload[url]})
+            return HTTPError
+
+        cls.get_patcher = patch("requests.get", side_effect=get_payload)
+        cls.get_patcher.start()
+
+    def test_public_repos(self) -> None:
+        """Integration test for the public_repos method"""
+        self.assertEqual(
+            GithubOrgClient("google").public_repos(),
+            self.expected_repos_custom,
+        )
+
+    def test_public_repos_with_license(self) -> None:
+        """Integration test for the public_repos method with a license."""
+        self.assertEqual(
+            GithubOrgClient("google").public_repos(license="apache-2.0"),
+            self.apache2_repos_custom,
+        )
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        """Removes the class fixtures after running all tests."""
+        cls.get_patcher.stop()
